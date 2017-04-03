@@ -1,0 +1,116 @@
+Sub ImportFiles()
+
+Dim column As Integer
+Dim file_name As String
+Dim sheet_name As String
+Dim older_sheetname As String
+Dim rng_admin As Range
+Dim lastRow As Integer
+Dim totalRow As Integer
+Dim temp As String
+Dim column_space As Integer
+Dim each_column_name As String
+
+
+'define space between column
+column_space = 5
+column = 0
+Sheets("admin").Activate
+
+Set rng_admin = Range("B4", Range("B4").End(xlDown))
+totalRow = rng_admin.Rows.Count
+lastRow = totalRow + 3
+
+
+
+
+For rep = 4 To lastRow
+
+    file_name = Sheets("admin").Range("B" & rep).Value
+    sheet_name = Sheets("admin").Range("C" & rep).Value
+    older_sheetname = Sheets("admin").Range("C" & rep - 1).Value
+    each_column_name = Sheets("admin").Range("D" & rep).Value
+    
+    Call CreateSheet(sheet_name, older_sheetname)
+    
+    Sheets(sheet_name).Activate
+
+    If (older_sheetname <> sheet_name) Then
+    column = 2
+    ElseIf older_sheetname = sheet_name Then
+    column = column + column_space
+    Else
+    MsgBox ("Error")
+    End If
+    
+    Call importTxt(file_name, column)
+    
+    Cells(1, column + column_space - 1).EntireColumn.Interior.Color = vbYellow
+    Cells(1, column).Value = each_column_name
+    older_sheetname = sheet_name
+    
+    
+Next rep
+
+
+End Sub
+
+Function CreateSheet(sheetName As String, old_sheet As String)
+    
+    
+    Dim wbToAddSheetsTo As Excel.Workbook
+    Dim i As Integer
+    Set wbToAddSheetsTo = ActiveWorkbook
+    
+    If old_sheet = sheetName Then
+    
+    Else
+     With wbToAddSheetsTo
+        .Sheets.Add after:=.Sheets(.Sheets.Count)
+        On Error Resume Next
+        ActiveSheet.Name = sheetName
+        If Err.Number = 1004 Then
+          Debug.Print cell.Value & " already used as a sheet name"
+        End If
+        On Error GoTo 0
+    End With
+    
+    End If
+    
+    
+    
+End Function
+
+Function importTxt(filename As String, clm As Integer)
+    
+     With ActiveSheet.QueryTables.Add(Connection:= _
+        "TEXT;" + filename, Destination:=Range(Cells(2, clm), Cells(2, clm)))
+        
+        
+        .FieldNames = True
+        .RowNumbers = False
+        .FillAdjacentFormulas = False
+        .PreserveFormatting = True
+        .RefreshOnFileOpen = False
+        .RefreshStyle = xlInsertDeleteCells
+        .SavePassword = False
+        .SaveData = True
+        .AdjustColumnWidth = True
+        .RefreshPeriod = 0
+        .TextFilePromptOnRefresh = False
+        .TextFilePlatform = 874
+        .TextFileStartRow = 1
+        .TextFileParseType = xlDelimited
+        .TextFileTextQualifier = xlTextQualifierDoubleQuote
+        .TextFileConsecutiveDelimiter = False
+        .TextFileTabDelimiter = True
+        .TextFileSemicolonDelimiter = False
+        .TextFileCommaDelimiter = False
+        .TextFileSpaceDelimiter = False
+        .TextFileColumnDataTypes = Array(1, 1, 1, 1)
+        .TextFileTrailingMinusNumbers = True
+        .Refresh BackgroundQuery:=False
+    End With
+
+
+End Function

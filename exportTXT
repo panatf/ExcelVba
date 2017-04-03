@@ -1,0 +1,123 @@
+Sub ExportFile()
+
+Dim rLastCell As Range
+Dim clm_space As Integer
+Dim str_path As String
+Dim i As Integer
+Dim my_range As Range
+Dim clm_start As Integer
+
+clm_start = 2
+clm_space = 5
+Dim ws As Worksheet
+    For Each ws In ActiveWorkbook.Worksheets
+    
+        ws.Activate
+        
+        
+        clm_start = 2
+        clm_space = 5
+    
+        If ws.Name = "admin" Then
+            GoTo DoNoThing
+        End If
+        
+        Set rLastCell = ws.Cells.Find(What:="*", After:=ws.Cells(1, 1), LookIn:=xlFormulas, LookAt:= _
+        xlPart, SearchOrder:=xlByColumns, SearchDirection:=xlPrevious, MatchCase:=False)
+        inputData = rLastCell.Column / clm_space
+        OutputData = Application.WorksheetFunction.RoundDown(inputData, 0)
+        
+        For i = 1 To OutputData
+            str_path = "C:\Users\tdcm026\Documents\change_sources\test\" & ActiveSheet.Name
+            Set my_range = Range(Cells(3, clm_start), Cells(3, clm_start).End(xlDown).End(xlToRight).End(xlToRight))
+            
+            Call CreateDir(str_path)
+            str_path = str_path & "\" & Cells(1, clm_start) & ".txt"
+            
+            Call exportFile(str_path, my_range)
+            clm_start = clm_start + clm_space
+        Next i
+        
+DoNoThing:
+    Next
+
+End Sub
+
+Function exportFile(myFolder As String, dataRange As Range) As String
+tempSheetName = "fileWrite_temp"
+SaveFile = "False"
+
+Dim FilePath As String
+Dim CellData As String
+Dim LastCol As Long
+Dim LastRow As Long
+
+dataRange.Copy
+
+'Ask user for folder to save text file to.
+If myFolder = "prompt" Then
+    myFolder = Application.GetSaveAsFilename(fileFilter:="XML Files (*.xml), *.xml, All Files (*), *")
+End If
+If myFolder = "False" Then
+    End
+End If
+
+Open myFolder For Output As #2
+
+Print #2, ""
+'This temporarily adds a sheet named "Test."
+Sheets.Add.Name = tempSheetName
+Sheets(tempSheetName).Select
+Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+    :=False, Transpose:=False
+
+LastCol = ActiveSheet.UsedRange.SpecialCells(xlCellTypeLastCell).Column
+LastRow = ActiveSheet.UsedRange.SpecialCells(xlCellTypeLastCell).Row
+
+For i = 1 To LastRow
+    For j = 1 To LastCol
+        If j = LastCol Then
+        CellData = CellData + Trim(ActiveCell(i, j).Value)
+        Else
+        CellData = CellData + Trim(ActiveCell(i, j).Value) + " "
+        End If
+        
+    Next j
+    If i = LastRow Then
+    Print #2, CellData;
+    Else
+    Print #2, CellData; ""
+    End If
+    
+    CellData = ""
+
+Next i
+
+Close #2
+
+'Remove temporary sheet.
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+ActiveWindow.SelectedSheets.Delete
+Application.DisplayAlerts = True
+Application.ScreenUpdating = True
+'Indicate save action.
+SaveFile = myFolder
+
+End Function
+
+Function CreateDir(strPath As String)
+    Dim elm As Variant
+    Dim strCheckPath As String
+    
+    strCheckPath = ""
+    For Each elm In Split(strPath, "\")
+        strCheckPath = strCheckPath & elm & "\"
+        If Len(Dir(strCheckPath, vbDirectory)) = 0 Then MkDir strCheckPath
+    Next
+End Function
+
+
+
+
+
